@@ -165,18 +165,21 @@
 
   <dialog data-dialog>
     <form method="dialog" data-settings-form>
-      <h2>🔌 Connect Claude</h2>
-      <p>This page sends your questions and the video transcript directly from your browser to Anthropic using your own API key. Nothing goes anywhere else.</p>
-      <label for="key">Anthropic API key</label>
-      <input id="key" type="password" autocomplete="off" placeholder="sk-ant-…" data-key>
-      <p class="note">Get one at <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">platform.claude.com</a>. Answers cost a few cents at most.</p>
+      <h2>🔌 Connect an AI model</h2>
+      <p>This page sends your questions and the video transcript directly from your browser to OpenRouter, using your own API key. Nothing goes anywhere else.</p>
+      <label for="key">OpenRouter API key</label>
+      <input id="key" type="password" autocomplete="off" placeholder="sk-or-…" data-key>
+      <p class="note">Get one at <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">openrouter.ai/settings/keys</a>. With the default model, most answers cost well under a cent.</p>
       <label class="check"><input type="checkbox" data-remember> Remember the key on this device</label>
       <label for="model">Model</label>
       <select id="model" data-model>
-        <option value="claude-opus-5-5">Claude Opus 5.5 (best answers)</option>
-        <option value="claude-sonnet-5-5">Claude Sonnet 5.5 (fast)</option>
-        <option value="claude-haiku-5-5">Claude Haiku 5.5 (cheapest)</option>
+        <option value="deepseek/deepseek-v4.1-flash">DeepSeek V4.1 Flash (fast &amp; cheap, default)</option>
+        <option value="anthropic/claude-sonnet-5.5">Claude Sonnet 5.5 (great answers)</option>
+        <option value="anthropic/claude-opus-5.5">Claude Opus 5.5 (best answers)</option>
+        <option value="google/gemini-3.8-flash">Gemini 3.8 Flash</option>
+        <option value="custom">Other OpenRouter model…</option>
       </select>
+      <input type="text" autocomplete="off" spellcheck="false" placeholder="e.g. google/gemini-3.5-flash-lite" data-custom-model aria-label="OpenRouter model ID" style="display:none; width:100%; margin-top:8px; border:1px solid var(--line); background:var(--bg); border-radius:10px; padding:8px 10px;">
       <div class="actions">
         <button value="cancel" formnovalidate>Cancel</button>
         <button value="save" class="primary">Save</button>
@@ -190,7 +193,8 @@
     var DATA = JSON.parse(document.getElementById("video-data").textContent);
     var segments = Array.isArray(DATA.segments) ? DATA.segments : [];
     var VIDEO_ID = DATA.video_id;
-    var API_URL = "https://api.anthropic.com/v1/messages";
+    var API_URL = "https://openrouter.ai/api/v1/chat/completions";
+    var DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash";
     var STORE = "yt2chat:";
 
     function store(k, v) { try { if (v === null) localStorage.removeItem(STORE + k); else localStorage.setItem(STORE + k, v); } catch (e) {} }
@@ -285,18 +289,25 @@
 
     // ---------- settings ----------
     var dialog = $("[data-dialog]");
-    var apiKey = read("key") || "";
-    var model = read("model") || "claude-opus-5-5";
+    var apiKey = read("orkey") || "";
+    var model = read("ormodel") || DEFAULT_MODEL;
+    var modelSelect = $("[data-model]"), customModel = $("[data-custom-model]");
+    function isPreset(m) { return Array.prototype.some.call(modelSelect.options, function (o) { return o.value === m && m !== "custom"; }); }
+    modelSelect.addEventListener("change", function () { customModel.style.display = modelSelect.value === "custom" ? "block" : "none"; if (modelSelect.value === "custom") customModel.focus(); });
     $("[data-settings]").addEventListener("click", openSettings);
     function openSettings() {
-      $("[data-key]").value = apiKey; $("[data-remember]").checked = !!read("key"); $("[data-model]").value = model;
+      $("[data-key]").value = apiKey; $("[data-remember]").checked = !!read("orkey");
+      modelSelect.value = isPreset(model) ? model : "custom";
+      customModel.value = isPreset(model) ? "" : model;
+      customModel.style.display = modelSelect.value === "custom" ? "block" : "none";
       dialog.showModal();
     }
     dialog.addEventListener("close", function () {
       if (dialog.returnValue !== "save") return;
       apiKey = $("[data-key]").value.trim();
-      model = $("[data-model]").value; store("model", model);
-      store("key", $("[data-remember]").checked && apiKey ? apiKey : null);
+      model = modelSelect.value === "custom" ? (customModel.value.trim() || DEFAULT_MODEL) : modelSelect.value;
+      store("ormodel", model);
+      store("orkey", $("[data-remember]").checked && apiKey ? apiKey : null);
       if (pending) { var q = pending; pending = null; ask(q); }
     });
 
@@ -317,7 +328,7 @@
       "</transcript>"
     ].join("\n");
 
-    var history = []; // Messages API turns. Assistant turns keep the content blocks exactly as received.
+    var history = []; // Chat turns: { role: "user" | "assistant", content: string }
     var messagesBox = $("[data-messages]"), input = $("[data-input]"), sendBtn = $("[data-send]");
     var busy = false, pending = null;
 
@@ -390,18 +401,6 @@
     input.addEventListener("input", function () { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; });
     $("[data-form]").addEventListener("submit", function (e) { e.preventDefault(); var q = input.value.trim(); if (q) { input.value = ""; input.style.height = ""; ask(q); } });
 
-    // When echoing a turn that contains a mid-output fallback, drop model-internal
-    // blocks that come before the last fallback marker (they belong to the declined attempt).
-    function echoable(blocks) {
-      var lastFb = -1;
-      blocks.forEach(function (b, i) { if (b && b.type === "fallback") lastFb = i; });
-      return blocks.filter(function (b, i) {
-        if (!b) return false;
-        if (i < lastFb && b.type !== "text") return false;
-        return true;
-      });
-    }
-
     async function ask(question) {
       if (busy) return;
       if (!apiKey) { pending = question; openSettings(); return; }
@@ -409,68 +408,60 @@
       addMsg("user", question);
       var out = addMsg("assistant", ""); out.classList.add("thinking");
       var turn = { role: "user", content: question };
-      var msgs = history.concat([turn]);
       var body = {
         model: model,
-        max_tokens: 64000,
         stream: true,
-        thinking: { type: "adaptive" },
-        output_config: { effort: "low" },
-        system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-        messages: msgs
+        max_tokens: 16000,
+        reasoning: { exclude: true },
+        messages: [{ role: "system", content: SYSTEM }].concat(history, [turn])
       };
       var headers = {
-        "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey,
+        // App attribution on openrouter.ai (optional, harmless).
+        "HTTP-Referer": "https://github.com/tstfully/youtube-to-ai-chat",
+        "X-Title": "YouTube to AI Chat"
       };
-      // Server-side refusal fallback (Opus and Sonnet on the Claude API).
-      if (model !== "claude-haiku-5-5") { body.fallbacks = "default"; headers["anthropic-beta"] = "server-side-fallback-2026-07-01"; }
 
-      var blocks = [], text = "", stopReason = null;
+      var text = "", finish = null;
       try {
         var res = await fetch(API_URL, { method: "POST", headers: headers, body: JSON.stringify(body) });
         if (!res.ok) {
           var err = {}; try { err = await res.json(); } catch (e) {}
           var msg = (err.error && err.error.message) || ("HTTP " + res.status);
-          if (res.status === 401) { msg = "That API key didn't work. Check it in Settings."; }
+          if (res.status === 401) msg = "That OpenRouter key didn't work. Check it in Settings.";
+          else if (res.status === 402) msg = "Your OpenRouter account is out of credits. Add credits at openrouter.ai, or pick a cheaper model in Settings.";
+          else if (res.status === 404 || res.status === 400 && /model/i.test(msg)) msg = "OpenRouter couldn't use that model (" + model + "). Pick another one in Settings.";
           throw new Error(msg);
         }
-        var reader = res.body.getReader(), dec = new TextDecoder(), buf = "";
-        for (;;) {
+        var reader = res.body.getReader(), dec = new TextDecoder(), buf = "", done = false;
+        while (!done) {
           var r = await reader.read(); if (r.done) break;
           buf += dec.decode(r.value, { stream: true });
-          var parts = buf.split("\n\n"); buf = parts.pop();
-          parts.forEach(function (chunk) {
-            var data = chunk.split("\n").filter(function (l) { return l.indexOf("data:") === 0; }).map(function (l) { return l.slice(5).trim(); }).join("");
-            if (!data) return;
-            var ev; try { ev = JSON.parse(data); } catch (e) { return; }
-            if (ev.type === "content_block_start") { blocks[ev.index] = ev.content_block; }
-            else if (ev.type === "content_block_delta") {
-              var b = blocks[ev.index], d = ev.delta; if (!b) return;
-              if (d.type === "text_delta") { b.text = (b.text || "") + d.text; text += d.text; renderRich(out, text); out.classList.add("thinking"); messagesBox.scrollTop = messagesBox.scrollHeight; }
-              else if (d.type === "thinking_delta") { b.thinking = (b.thinking || "") + d.thinking; }
-              else if (d.type === "signature_delta") { b.signature = d.signature; }
-            }
-            else if (ev.type === "message_delta" && ev.delta) { stopReason = ev.delta.stop_reason || stopReason; }
-            else if (ev.type === "error") { throw new Error((ev.error && ev.error.message) || "The response stream failed."); }
-          });
+          var lines = buf.split("\n"); buf = lines.pop();
+          for (var li = 0; li < lines.length; li++) {
+            var line = lines[li].trim();
+            if (line.indexOf("data:") !== 0) continue; // skips blank lines and ": OPENROUTER PROCESSING" comments
+            var data = line.slice(5).trim();
+            if (data === "[DONE]") { done = true; break; }
+            var ev; try { ev = JSON.parse(data); } catch (e) { continue; }
+            if (ev.error) throw new Error(ev.error.message || "The response stream failed.");
+            var choice = ev.choices && ev.choices[0];
+            if (!choice) continue;
+            var piece = choice.delta && choice.delta.content;
+            if (piece) { text += piece; renderRich(out, text); out.classList.add("thinking"); messagesBox.scrollTop = messagesBox.scrollHeight; }
+            if (choice.finish_reason) finish = choice.finish_reason;
+          }
         }
         out.classList.remove("thinking");
-        if (stopReason === "refusal") {
-          out.remove();
-          addMsg("error", "Claude declined to answer that one. Try rephrasing the question.");
-        } else {
-          if (!text) renderRich(out, "(No answer was returned.)");
-          if (stopReason === "max_tokens") out.appendChild(el("p", "note", "The answer was cut off because it hit the length limit."));
-          var acts = el("div", "msg-actions"), copyBtn = el("button", null, "📋 Copy"); copyBtn.type = "button";
-          copyBtn.addEventListener("click", (function (t) { return function () {
-            try { navigator.clipboard.writeText(t).then(function () { copyBtn.textContent = "✅ Copied"; setTimeout(function () { copyBtn.textContent = "📋 Copy"; }, 1500); }); } catch (e) {}
-          }; })(text));
-          acts.appendChild(copyBtn); out.appendChild(acts);
-          history.push(turn, { role: "assistant", content: echoable(blocks) });
-        }
+        if (!text) renderRich(out, "(No answer was returned.)");
+        if (finish === "length") out.appendChild(el("p", "note", "The answer was cut off because it hit the length limit."));
+        var acts = el("div", "msg-actions"), copyBtn = el("button", null, "📋 Copy"); copyBtn.type = "button";
+        copyBtn.addEventListener("click", (function (t) { return function () {
+          try { navigator.clipboard.writeText(t).then(function () { copyBtn.textContent = "✅ Copied"; setTimeout(function () { copyBtn.textContent = "📋 Copy"; }, 1500); }); } catch (e) {}
+        }; })(text));
+        acts.appendChild(copyBtn); out.appendChild(acts);
+        if (text) history.push(turn, { role: "assistant", content: text });
       } catch (e) {
         out.remove();
         addMsg("error", e.message || String(e));

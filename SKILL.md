@@ -13,7 +13,7 @@ metadata:
 Two ways to chat with a YouTube video:
 
 1. **💬 Chat here (default).** Load the transcript into this conversation and answer the user's questions directly, citing the exact moment for every claim.
-2. **🌐 Build a chat page.** On request, generate one HTML page with the embedded video, a searchable transcript, and a chat box powered by Claude. Clicking a cited timestamp jumps the video there. The page uses each viewer's own Anthropic API key, entered in the page.
+2. **🌐 Build a chat page.** On request, generate one HTML page with the embedded video, a searchable transcript, and an AI chat box. Clicking a cited timestamp jumps the video there. The page connects through OpenRouter with each viewer's own API key (bring your own key), defaulting to DeepSeek V4.1 Flash.
 
 Use mode 2 only when the user asks for a page, app, tool, or something to share or embed. Otherwise use mode 1.
 
@@ -101,9 +101,9 @@ When the user seems done, or wants to keep exploring on their own, offer the cha
 
 > 🎉 **Your chat page is ready:** `video-chats/<file>.html`
 >
-> Open it in Chrome, Safari, Edge, or Firefox. The first time you ask a question, it asks for an **Anthropic API key** (get one at https://platform.claude.com/settings/keys). The key goes straight from your browser to Anthropic and is saved only if you tick "Remember". Answers usually cost a cent or two. 🪙
+> Open it in Chrome, Safari, Edge, or Firefox. The first time you ask a question, it asks for an **OpenRouter API key** (get one at https://openrouter.ai/settings/keys). The key goes straight from your browser to OpenRouter and is saved only if you tick "Remember". The default model, DeepSeek V4.1 Flash, makes most answers cost well under a cent. 🪙
 >
-> 💡 Tips: tap any ⏱️ timestamp to jump the video · switch models in ⚙️ Settings · each visitor uses their own key, so it's safe to share.
+> 💡 Tips: tap any ⏱️ timestamp to jump the video · switch models in ⚙️ Settings (DeepSeek, Claude, Gemini, or any OpenRouter model) · each visitor uses their own key, so it's safe to share.
 >
 > If the video won't play when opened from your computer, timestamps open YouTube instead. Hosting the file anywhere (GitHub Pages, Netlify, Vercel) fixes this.
 

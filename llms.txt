@@ -1,6 +1,6 @@
 # YouTube to AI Chat
 
-> A free, open-source Claude skill to chat with any YouTube video. In chat, it answers questions from the video's transcript with clickable timestamp citations. On request, it builds a shareable single-file "chat with this video" web page: embedded player, searchable transcript, and a Claude-powered chat (using each viewer's own Anthropic API key, no backend) whose cited timestamps jump the video. Built for researchers, marketers, students, PMs, and creators; no coding needed.
+> A free, open-source Claude skill to chat with any YouTube video. In chat, it answers questions from the video's transcript with clickable timestamp citations. On request, it builds a shareable single-file "chat with this video" web page: embedded player, searchable transcript, and an AI chat via OpenRouter (bring your own key, default model deepseek/deepseek-v4.1-flash, no backend) whose cited timestamps jump the video. Built for researchers, marketers, students, PMs, and creators; no coding needed.
 
 ## Install
 

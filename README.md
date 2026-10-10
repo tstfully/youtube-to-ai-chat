@@ -39,14 +39,14 @@ You get **one HTML file** with:
 | 💬 **AI chat** | Answers cite moments as ⏱️ chips that jump the video |
 | ⚡ **One-tap questions** | 📝 Summarize · 🔥 Surprising claims · ✅ Action items, plus questions written for that video |
 | 📋 **Copy answers** | Paste straight into notes, docs, or Slack |
-| 🧠 **Pick your model** | Claude Opus 5.5, Sonnet 5.5, or Haiku 5.5 |
+| 🧠 **Pick your model** | DeepSeek V4.1 Flash by default, or Claude, Gemini, or any of 300+ models on OpenRouter |
 | 🌗 **Light & dark mode** | And a phone layout with Chat / Transcript tabs |
 
 <img src="docs/gallery.png" alt="The chat page welcome screen with suggested questions, and the dark mode version with answers." width="100%">
 
-👉 **[See the example page](examples/candle-shop-podcast-chat.html)** (download it and open in your browser): a fictional podcast about a candle shop that doubled revenue by selling less. Add your Anthropic key in ⚙️ Settings and it really works.
+👉 **[See the example page](examples/candle-shop-podcast-chat.html)** (download it and open in your browser): a fictional podcast about a candle shop that doubled revenue by selling less. Add your OpenRouter key in ⚙️ Settings and it really works.
 
-**🔒 No server, no cost to you.** The page talks to Claude straight from each viewer's browser using *their own* Anthropic API key. The key goes only to Anthropic and is saved only if the viewer chooses. Answers typically cost a cent or two.
+**🔒 No server, no cost to you. Bring your own key.** The page connects through [OpenRouter](https://openrouter.ai) straight from each viewer's browser, using *their own* API key. The key goes only to OpenRouter and is saved only if the viewer chooses. With the default model (DeepSeek V4.1 Flash), most answers cost well under a cent.
 
 ---
 
@@ -146,12 +146,12 @@ Nope. You ask in plain English. For the chat page, you get a file you double-cli
 
 <details>
 <summary><b>Is it really free?</b></summary>
-The skill is free and open source (MIT). Transcripts are free for 10 videos a month on YouTubeTranscript.dev, or free anytime if you paste the transcript yourself. Chat-page answers use each viewer's own Anthropic key (usually a cent or two per answer).
+The skill is free and open source (MIT). Transcripts are free for 10 videos a month on YouTubeTranscript.dev, or free anytime if you paste the transcript yourself. Chat-page answers use each viewer's own OpenRouter key (usually well under a cent per answer with the default model).
 </details>
 
 <details>
 <summary><b>Is my API key safe on the chat page?</b></summary>
-The page has no backend. Your key goes only from your browser to Anthropic, and it's kept in memory unless you tick "Remember", which saves it in your own browser. It's never written into the file, so sharing the page never shares your key.
+The page has no backend. Your OpenRouter key goes only from your browser to OpenRouter, and it's kept in memory unless you tick "Remember", which saves it in your own browser. It's never written into the file, so sharing the page never shares your key. Tip: set a monthly spending limit on your key in OpenRouter for extra peace of mind.
 </details>
 
 <details>
