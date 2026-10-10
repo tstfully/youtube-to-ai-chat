@@ -60,7 +60,15 @@ Type this into Claude Code:
 /plugin install youtube-to-ai-chat --marketplace tstfully/youtube-to-ai-chat
 ```
 
-Done! 🎉 You also get access to the companion skills ([case study](https://github.com/tstfully/youtube-to-case-study) and [course](https://github.com/tstfully/youtube-to-course)).
+Done! 🎉 Then just ask Claude in plain English.
+
+**🎁 Want all three YouTube skills?** Paste all three lines:
+
+```
+/plugin install youtube-to-case-study --marketplace tstfully/youtube-to-case-study
+/plugin install youtube-to-course --marketplace tstfully/youtube-to-course
+/plugin install youtube-to-ai-chat --marketplace tstfully/youtube-to-ai-chat
+```
 
 <details>
 <summary>Other ways to install</summary>
@@ -73,7 +81,7 @@ Done! 🎉 You also get access to the companion skills ([case study](https://git
 
 ```
 /plugin marketplace add tstfully/youtube-to-ai-chat
-/plugin install youtube-to-ai-chat@youtube-skills
+/plugin install youtube-to-ai-chat@youtube-to-ai-chat
 ```
 
 **Skills CLI** (works with Claude Code, Cursor, Codex, and other agents):

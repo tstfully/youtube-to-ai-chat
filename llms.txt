@@ -5,7 +5,7 @@
 ## Install
 
 - Claude Code (one step): `/plugin install youtube-to-ai-chat --marketplace tstfully/youtube-to-ai-chat`
-- Claude Code (two steps): `/plugin marketplace add tstfully/youtube-to-ai-chat` then `/plugin install youtube-to-ai-chat@youtube-skills`
+- Claude Code (two steps): `/plugin marketplace add tstfully/youtube-to-ai-chat` then `/plugin install youtube-to-ai-chat@youtube-to-ai-chat`
 - Any agent via the Skills CLI: `npx skills add tstfully/youtube-to-ai-chat`
 - Manual: clone into `~/.claude/skills/youtube-to-ai-chat`
 - Claude.ai: download the repo ZIP and upload it under Settings → Capabilities → Skills
