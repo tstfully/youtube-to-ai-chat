@@ -8,7 +8,7 @@
 [![Claude skill](https://img.shields.io/badge/Claude-skill-8b85ff)](#-get-started-in-60-seconds)
 [![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20·%20Claude.ai%20·%20Cursor-5d6573)](#-get-started-in-60-seconds)
 
-<img src="docs/hero.png" alt="A chat-with-video page: transcript on the left, cited answers on the right, and a phone view." width="820">
+<img src="docs/real-hero.png" alt="A real chat page for Steve Jobs' 2005 Stanford commencement speech, with cited answers." width="820">
 
 **Stop scrubbing through 2-hour podcasts.** 🎧 Paste a link, ask a question, and get a straight answer with receipts.
 
@@ -43,6 +43,22 @@ You get **one HTML file** with:
 | 📋 **Copy answers** | Paste straight into notes, docs, or Slack |
 | 🧠 **Pick your model** | DeepSeek V4.1 Flash by default, or Claude, Gemini, or any of 300+ models on OpenRouter |
 | 🌗 **Light & dark mode** | And a phone layout with Chat / Transcript tabs |
+
+## 👀 See a real example
+
+The screenshot above is a chat page built from **[Steve Jobs' 2005 Stanford commencement speech](https://www.youtube.com/watch?v=UF8uR6Z6KLc)**. A taste:
+
+> **You:** Why did he drop out of college?
+>
+> **AI:** Mostly money and doubt. Tuition was eating his parents' savings, "almost as expensive as Stanford" [2:19], and he "couldn't see the value in it" [2:27]. He trusted it would work out [2:42], calling it "one of the best decisions I ever made" [2:49]. Dropping out let him sit in on a calligraphy class [3:49], which later shaped the Mac's typography [4:21].
+
+> **You:** Where does "Stay Hungry. Stay Foolish." come from?
+>
+> **AI:** It was printed on the back cover of the final issue of *The Whole Earth Catalog* [13:58], as its farewell message [14:13]. "Stay Hungry. Stay Foolish." [14:08] He'd always wished that for himself [14:18], and wished it for the graduates [14:23].
+
+<sub>We don't include that chat page here, because it embeds the full speech transcript (© Stanford University). Make your own in one prompt: "Make a chat page for https://www.youtube.com/watch?v=UF8uR6Z6KLc".</sub>
+
+**🕯️ Second example you can download:** a fictional podcast chat page.
 
 <img src="docs/gallery.png" alt="The chat page welcome screen with suggested questions, and the dark mode version with answers." width="100%">
 
