@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chat with this video</title>
+  <meta name="description" content="Ask questions about a YouTube video and get answers cited to the exact moment.">
+  <meta name="generator" content="youtube-to-ai-chat (https://github.com/tstfully/youtube-to-ai-chat)">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f6f8; --surface: #ffffff; --surface-2: #eef0f4; --ink: #15181e; --muted: #5d6573;
+      --line: #dde1e8; --accent: #4f46e5; --accent-ink: #ffffff; --accent-soft: #e6e5fc;
+      --bad: #b4232c; --bad-soft: #fbe3e4; --hl: #fff2b3;
+      --body: "Inter", system-ui, -apple-system, sans-serif; --radius: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0f1115; --surface: #171a20; --surface-2: #20242c; --ink: #e9ecf1; --muted: #9aa3b2;
+        --line: #2b303a; --accent: #8b85ff; --accent-ink: #0f1115; --accent-soft: #25234a;
+        --bad: #f08a8f; --bad-soft: #3a1c1f; --hl: #4a4115;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #0f1115; --surface: #171a20; --surface-2: #20242c; --ink: #e9ecf1; --muted: #9aa3b2;
+      --line: #2b303a; --accent: #8b85ff; --accent-ink: #0f1115; --accent-soft: #25234a;
+      --bad: #f08a8f; --bad-soft: #3a1c1f; --hl: #4a4115;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--body); -webkit-font-smoothing: antialiased; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    a { color: var(--accent); }
+
+    .app { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; max-width: 1360px; margin: 0 auto; padding: 16px; height: 100vh; height: 100dvh; }
+    .col { display: flex; flex-direction: column; min-height: 0; gap: 12px; }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+
+    header.video-head h1 { font-size: 18px; line-height: 1.3; margin: 0; }
+    header.video-head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+    .player { position: relative; aspect-ratio: 16 / 9; border-radius: var(--radius); overflow: hidden; background: #000; flex: none; }
+    .player > div, .player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+    .transcript { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .transcript .bar { display: flex; gap: 8px; padding: 10px; border-bottom: 1px solid var(--line); align-items: center; }
+    .transcript .bar input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 7px 10px; }
+    .transcript .count { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .lines { overflow-y: auto; padding: 6px; flex: 1; }
+    .line { display: grid; grid-template-columns: 52px 1fr; gap: 8px; width: 100%; text-align: left; padding: 6px 8px; border: 0; background: none; border-radius: 8px; cursor: pointer; }
+    .line:hover { background: var(--surface-2); }
+    .line.active { background: var(--accent-soft); }
+    .line .t { color: var(--accent); font-weight: 600; font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 2px; }
+    .line mark { background: var(--hl); color: inherit; border-radius: 3px; }
+
+    .chat { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .chat-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .chat-head strong { flex: 1; }
+    .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; height: 32px; min-width: 32px; padding: 0 10px; cursor: pointer; font-size: 13px; }
+    .icon-btn:hover { border-color: var(--accent); }
+    .messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .msg { max-width: 92%; padding: 10px 13px; border-radius: 14px; overflow-wrap: anywhere; }
+    .msg.user { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
+    .msg.assistant { align-self: flex-start; background: var(--surface-2); border-bottom-left-radius: 4px; }
+    .msg.error { align-self: stretch; background: var(--bad-soft); color: var(--bad); max-width: none; }
+    .msg p { margin: 0 0 8px; } .msg p:last-child { margin: 0; }
+    .msg ul, .msg ol { margin: 0 0 8px; padding-left: 20px; }
+    .msg.thinking::after { content: "▍"; animation: blink 1s steps(1) infinite; color: var(--accent); }
+    @keyframes blink { 50% { opacity: 0; } }
+    .ts { display: inline-block; border: 0; cursor: pointer; font: 600 12px var(--body); padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); vertical-align: 1px; font-variant-numeric: tabular-nums; }
+    .ts::before { content: "▶ "; font-size: 9px; }
+    .msg.user .ts { background: rgba(255,255,255,.2); color: inherit; }
+
+    .welcome { color: var(--muted); }
+    .welcome h2 { color: var(--ink); font-size: 17px; margin: 0 0 6px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; cursor: pointer; text-align: left; }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    form.composer { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); }
+    form.composer textarea { flex: 1; resize: none; border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 9px 12px; max-height: 140px; }
+    form.composer button { border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 12px; padding: 0 16px; font-weight: 600; cursor: pointer; }
+    form.composer button:disabled { opacity: .5; cursor: default; }
+
+    dialog { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); padding: 20px; width: min(460px, calc(100vw - 32px)); }
+    dialog::backdrop { background: rgba(0,0,0,.45); }
+    dialog h2 { margin: 0 0 6px; font-size: 18px; }
+    dialog p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+    dialog label { display: block; font-weight: 600; font-size: 13px; margin: 12px 0 4px; }
+    dialog input[type=password], dialog select { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 8px 10px; }
+    dialog .check { display: flex; gap: 8px; align-items: center; font-weight: 400; }
+    dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+    dialog .actions button { border-radius: 10px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); }
+    dialog .actions button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+    .note { font-size: 12px; color: var(--muted); }
+
+    .tabs { display: none; }
+    footer.credit { font-size: 12px; color: var(--muted); text-align: center; }
+    footer.credit a { color: var(--muted); }
+
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 1fr; height: auto; min-height: 100dvh; }
+      .col.left { gap: 10px; }
+      .tabs { display: flex; gap: 6px; }
+      .tabs button { flex: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px; cursor: pointer; font-weight: 600; }
+      .tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+      body[data-tab="chat"] .transcript { display: none; }
+      body[data-tab="transcript"] .col.right { display: none; }
+      .transcript { height: 60vh; flex: none; }
+      .chat { height: 70vh; height: 70dvh; flex: none; }
+    }
+  </style>
+</head>
+<body data-tab="chat">
+  <!-- Filled in by scripts/build-chat-page.mjs. Do not edit by hand. -->
+  <script id="video-data" type="application/json">{"video_id":null,"title":"","channel":"","segments":[],"suggested_questions":[]}</script>
+
+  <div class="app">
+    <div class="col left">
+      <header class="video-head">
+        <h1 data-title>Video</h1>
+        <p data-channel></p>
+      </header>
+      <div class="player"><div id="player"></div></div>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab-btn="chat" aria-selected="true">Chat</button>
+        <button type="button" role="tab" data-tab-btn="transcript" aria-selected="false">Transcript</button>
+      </div>
+      <section class="panel transcript" aria-label="Transcript">
+        <div class="bar">
+          <input type="search" placeholder="Search the transcript" data-search aria-label="Search the transcript">
+          <span class="count" data-count></span>
+        </div>
+        <div class="lines" data-lines></div>
+      </section>
+    </div>
+
+    <div class="col right">
+      <section class="panel chat" aria-label="Chat">
+        <div class="chat-head">
+          <strong>Ask this video</strong>
+          <button type="button" class="icon-btn" data-clear title="Start a new chat">New chat</button>
+          <button type="button" class="icon-btn" data-settings title="Settings">⚙ Settings</button>
+          <button type="button" class="icon-btn" data-theme title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
+        </div>
+        <div class="messages" data-messages aria-live="polite"></div>
+        <form class="composer" data-form>
+          <textarea rows="1" placeholder="Ask anything about this video…" data-input aria-label="Your question"></textarea>
+          <button type="submit" data-send>Ask</button>
+        </form>
+      </section>
+      <footer class="credit">
+        Made with <a href="https://github.com/tstfully/youtube-to-ai-chat" target="_blank" rel="noopener">youtube-to-ai-chat</a> ·
+        transcript by <a href="https://youtubetranscript.dev" target="_blank" rel="noopener">YouTubeTranscript.dev</a>
+      </footer>
+    </div>
+  </div>
+
+  <dialog data-dialog>
+    <form method="dialog" data-settings-form>
+      <h2>Connect Claude</h2>
+      <p>This page sends your questions and the video transcript directly from your browser to Anthropic using your own API key. Nothing goes anywhere else.</p>
+      <label for="key">Anthropic API key</label>
+      <input id="key" type="password" autocomplete="off" placeholder="sk-ant-…" data-key>
+      <p class="note">Get one at <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">platform.claude.com</a>. Answers cost a few cents at most.</p>
+      <label class="check"><input type="checkbox" data-remember> Remember the key on this device</label>
+      <label for="model">Model</label>
+      <select id="model" data-model>
+        <option value="claude-opus-5-5">Claude Opus 5.5 (best answers)</option>
+        <option value="claude-sonnet-5-5">Claude Sonnet 5.5 (fast)</option>
+        <option value="claude-haiku-5-5">Claude Haiku 5.5 (cheapest)</option>
+      </select>
+      <div class="actions">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="save" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+  (function () {
+    "use strict";
+    var DATA = JSON.parse(document.getElementById("video-data").textContent);
+    var segments = Array.isArray(DATA.segments) ? DATA.segments : [];
+    var VIDEO_ID = DATA.video_id;
+    var API_URL = "https://api.anthropic.com/v1/messages";
+    var STORE = "yt2chat:";
+
+    function store(k, v) { try { if (v === null) localStorage.removeItem(STORE + k); else localStorage.setItem(STORE + k, v); } catch (e) {} }
+    function read(k) { try { return localStorage.getItem(STORE + k); } catch (e) { return null; } }
+    function $(sel) { return document.querySelector(sel); }
+    function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+
+    function fmt(sec) {
+      sec = Math.max(0, Math.floor(sec));
+      var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+      return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0");
+    }
+    function parseTs(str) {
+      var p = str.split(":").map(Number);
+      return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0] * 60 + p[1];
+    }
+
+    // ---------- header ----------
+    document.title = (DATA.title ? DATA.title + " · " : "") + "Chat with this video";
+    $("[data-title]").textContent = DATA.title || "Chat with this video";
+    $("[data-channel]").textContent = DATA.channel || "";
+
+    // ---------- theme ----------
+    var root = document.documentElement;
+    var savedTheme = read("theme"); if (savedTheme) root.setAttribute("data-theme", savedTheme);
+    $("[data-theme]").addEventListener("click", function () {
+      var dark = root.getAttribute("data-theme") === "dark" || (!root.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+      var next = dark ? "light" : "dark"; root.setAttribute("data-theme", next); store("theme", next);
+    });
+
+    // ---------- mobile tabs ----------
+    document.querySelectorAll("[data-tab-btn]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.body.setAttribute("data-tab", b.getAttribute("data-tab-btn"));
+        document.querySelectorAll("[data-tab-btn]").forEach(function (x) { x.setAttribute("aria-selected", String(x === b)); });
+      });
+    });
+
+    // ---------- player ----------
+    var player = null, playerReady = false;
+    function seek(sec) {
+      if (playerReady && player && player.seekTo) { player.seekTo(sec, true); player.playVideo(); }
+      else if (VIDEO_ID) window.open("https://www.youtube.com/watch?v=" + encodeURIComponent(VIDEO_ID) + "&t=" + Math.floor(sec) + "s", "_blank", "noopener");
+    }
+    if (VIDEO_ID) {
+      window.onYouTubeIframeAPIReady = function () {
+        player = new YT.Player("player", {
+          videoId: VIDEO_ID,
+          playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+          events: { onReady: function () { playerReady = true; }, onError: function () { playerReady = false; } }
+        });
+      };
+      var s = document.createElement("script"); s.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(s);
+    }
+
+    // ---------- transcript ----------
+    var linesBox = $("[data-lines]");
+    var lineEls = segments.map(function (seg) {
+      var b = el("button", "line"); b.type = "button";
+      b.appendChild(el("span", "t", fmt(seg.start)));
+      var txt = el("span", "x", seg.text); b.appendChild(txt);
+      b.addEventListener("click", function () { seek(seg.start); });
+      linesBox.appendChild(b);
+      return { btn: b, txt: txt, seg: seg };
+    });
+    var search = $("[data-search]"), count = $("[data-count]");
+    search.addEventListener("input", function () {
+      var q = search.value.trim().toLowerCase(), hits = 0, first = null;
+      lineEls.forEach(function (l) {
+        var t = l.seg.text, i = q ? t.toLowerCase().indexOf(q) : -1;
+        l.btn.style.display = q && i < 0 ? "none" : "";
+        l.txt.textContent = "";
+        if (i < 0) { l.txt.textContent = t; return; }
+        hits++; if (!first) first = l.btn;
+        l.txt.appendChild(document.createTextNode(t.slice(0, i)));
+        l.txt.appendChild(el("mark", null, t.slice(i, i + q.length)));
+        l.txt.appendChild(document.createTextNode(t.slice(i + q.length)));
+      });
+      count.textContent = q ? hits + " match" + (hits === 1 ? "" : "es") : "";
+    });
+    setInterval(function () {
+      if (!playerReady || !player.getCurrentTime || search.value) return;
+      var t = player.getCurrentTime(), cur = null;
+      for (var i = 0; i < lineEls.length; i++) { if (lineEls[i].seg.start <= t) cur = lineEls[i]; else break; }
+      lineEls.forEach(function (l) { l.btn.classList.toggle("active", l === cur); });
+      if (cur && player.getPlayerState && player.getPlayerState() === 1) {
+        var box = linesBox.getBoundingClientRect(), r = cur.btn.getBoundingClientRect();
+        if (r.top < box.top || r.bottom > box.bottom) linesBox.scrollTop += r.top - box.top - box.height / 3;
+      }
+    }, 1000);
+
+    // ---------- settings ----------
+    var dialog = $("[data-dialog]");
+    var apiKey = read("key") || "";
+    var model = read("model") || "claude-opus-5-5";
+    $("[data-settings]").addEventListener("click", openSettings);
+    function openSettings() {
+      $("[data-key]").value = apiKey; $("[data-remember]").checked = !!read("key"); $("[data-model]").value = model;
+      dialog.showModal();
+    }
+    dialog.addEventListener("close", function () {
+      if (dialog.returnValue !== "save") return;
+      apiKey = $("[data-key]").value.trim();
+      model = $("[data-model]").value; store("model", model);
+      store("key", $("[data-remember]").checked && apiKey ? apiKey : null);
+      if (pending) { var q = pending; pending = null; ask(q); }
+    });
+
+    // ---------- chat ----------
+    var transcriptText = segments.map(function (s) { return "[" + fmt(s.start) + "] " + s.text; }).join("\n");
+    var SYSTEM = [
+      "You answer questions about one YouTube video, using only its transcript below.",
+      "Video title: " + (DATA.title || "unknown") + (DATA.channel ? "\nChannel: " + DATA.channel : ""),
+      "",
+      "How to answer:",
+      "- Ground every claim in the transcript. Cite the moment it comes from as [m:ss] or [h:mm:ss], copying a timestamp that appears in the transcript. Cite 1-3 moments per answer.",
+      "- If the transcript doesn't cover the question, say so plainly, then offer what it does cover. Don't fill gaps from general knowledge unless the user asks, and label it when you do.",
+      "- Be concise and conversational. Use short paragraphs or a short list. Plain text only: no headings, tables, or code blocks unless asked.",
+      "- Answer in the language the user writes in.",
+      "",
+      "<transcript>",
+      transcriptText,
+      "</transcript>"
+    ].join("\n");
+
+    var history = []; // Messages API turns. Assistant turns keep the content blocks exactly as received.
+    var messagesBox = $("[data-messages]"), input = $("[data-input]"), sendBtn = $("[data-send]");
+    var busy = false, pending = null;
+
+    function renderRich(node, text) {
+      node.textContent = "";
+      var blocks = text.replace(/\r/g, "").split(/\n{2,}/);
+      blocks.forEach(function (block) {
+        var lines = block.split("\n");
+        var isList = lines.every(function (l) { return /^\s*([-*•]|\d+[.)])\s+/.test(l) || !l.trim(); });
+        if (isList) {
+          var ordered = /^\s*\d/.test(lines[0]);
+          var list = el(ordered ? "ol" : "ul");
+          lines.forEach(function (l) { if (!l.trim()) return; var li = el("li"); inline(li, l.replace(/^\s*([-*•]|\d+[.)])\s+/, "")); list.appendChild(li); });
+          node.appendChild(list);
+        } else {
+          var p = el("p"); inline(p, lines.join("\n")); node.appendChild(p);
+        }
+      });
+    }
+    function inline(node, text) {
+      var re = /\[(\d{1,2}:\d{2}(?::\d{2})?)\]|\*\*([^*]+)\*\*|\n/g, last = 0, m;
+      while ((m = re.exec(text))) {
+        if (m.index > last) node.appendChild(document.createTextNode(text.slice(last, m.index)));
+        if (m[1]) {
+          var sec = parseTs(m[1]);
+          var b = el("button", "ts", m[1]); b.type = "button"; b.title = "Jump to " + m[1];
+          b.addEventListener("click", (function (s) { return function () { seek(s); }; })(sec));
+          node.appendChild(b);
+        } else if (m[2]) node.appendChild(el("strong", null, m[2]));
+        else node.appendChild(el("br"));
+        last = re.lastIndex;
+      }
+      if (last < text.length) node.appendChild(document.createTextNode(text.slice(last)));
+    }
+
+    function welcome() {
+      messagesBox.textContent = "";
+      var w = el("div", "welcome");
+      w.appendChild(el("h2", null, "Ask anything about this video"));
+      w.appendChild(el("p", null, segments.length ? "Answers come from the transcript and link to the exact moment." : "No transcript was loaded into this page."));
+      var qs = (DATA.suggested_questions || []).slice(0, 4);
+      if (qs.length) {
+        var chips = el("div", "chips");
+        qs.forEach(function (q) { var c = el("button", "chip", q); c.type = "button"; c.addEventListener("click", function () { ask(q); }); chips.appendChild(c); });
+        w.appendChild(chips);
+      }
+      messagesBox.appendChild(w);
+    }
+    welcome();
+    $("[data-clear]").addEventListener("click", function () { if (busy) return; history = []; welcome(); });
+
+    function addMsg(role, text) {
+      var w = messagesBox.querySelector(".welcome"); if (w) w.remove();
+      var m = el("div", "msg " + role);
+      if (role === "user" || role === "error") m.textContent = text; else renderRich(m, text || "");
+      messagesBox.appendChild(m); messagesBox.scrollTop = messagesBox.scrollHeight;
+      return m;
+    }
+
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("[data-form]").requestSubmit(); } });
+    input.addEventListener("input", function () { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; });
+    $("[data-form]").addEventListener("submit", function (e) { e.preventDefault(); var q = input.value.trim(); if (q) { input.value = ""; input.style.height = ""; ask(q); } });
+
+    // When echoing a turn that contains a mid-output fallback, drop model-internal
+    // blocks that come before the last fallback marker (they belong to the declined attempt).
+    function echoable(blocks) {
+      var lastFb = -1;
+      blocks.forEach(function (b, i) { if (b && b.type === "fallback") lastFb = i; });
+      return blocks.filter(function (b, i) {
+        if (!b) return false;
+        if (i < lastFb && b.type !== "text") return false;
+        return true;
+      });
+    }
+
+    async function ask(question) {
+      if (busy) return;
+      if (!apiKey) { pending = question; openSettings(); return; }
+      busy = true; sendBtn.disabled = true;
+      addMsg("user", question);
+      var out = addMsg("assistant", ""); out.classList.add("thinking");
+      var turn = { role: "user", content: question };
+      var msgs = history.concat([turn]);
+      var body = {
+        model: model,
+        max_tokens: 64000,
+        stream: true,
+        thinking: { type: "adaptive" },
+        output_config: { effort: "low" },
+        system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+        messages: msgs
+      };
+      var headers = {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      };
+      // Server-side refusal fallback (Opus and Sonnet on the Claude API).
+      if (model !== "claude-haiku-5-5") { body.fallbacks = "default"; headers["anthropic-beta"] = "server-side-fallback-2026-07-01"; }
+
+      var blocks = [], text = "", stopReason = null;
+      try {
+        var res = await fetch(API_URL, { method: "POST", headers: headers, body: JSON.stringify(body) });
+        if (!res.ok) {
+          var err = {}; try { err = await res.json(); } catch (e) {}
+          var msg = (err.error && err.error.message) || ("HTTP " + res.status);
+          if (res.status === 401) { msg = "That API key didn't work. Check it in Settings."; }
+          throw new Error(msg);
+        }
+        var reader = res.body.getReader(), dec = new TextDecoder(), buf = "";
+        for (;;) {
+          var r = await reader.read(); if (r.done) break;
+          buf += dec.decode(r.value, { stream: true });
+          var parts = buf.split("\n\n"); buf = parts.pop();
+          parts.forEach(function (chunk) {
+            var data = chunk.split("\n").filter(function (l) { return l.indexOf("data:") === 0; }).map(function (l) { return l.slice(5).trim(); }).join("");
+            if (!data) return;
+            var ev; try { ev = JSON.parse(data); } catch (e) { return; }
+            if (ev.type === "content_block_start") { blocks[ev.index] = ev.content_block; }
+            else if (ev.type === "content_block_delta") {
+              var b = blocks[ev.index], d = ev.delta; if (!b) return;
+              if (d.type === "text_delta") { b.text = (b.text || "") + d.text; text += d.text; renderRich(out, text); out.classList.add("thinking"); messagesBox.scrollTop = messagesBox.scrollHeight; }
+              else if (d.type === "thinking_delta") { b.thinking = (b.thinking || "") + d.thinking; }
+              else if (d.type === "signature_delta") { b.signature = d.signature; }
+            }
+            else if (ev.type === "message_delta" && ev.delta) { stopReason = ev.delta.stop_reason || stopReason; }
+            else if (ev.type === "error") { throw new Error((ev.error && ev.error.message) || "The response stream failed."); }
+          });
+        }
+        out.classList.remove("thinking");
+        if (stopReason === "refusal") {
+          out.remove();
+          addMsg("error", "Claude declined to answer that one. Try rephrasing the question.");
+        } else {
+          if (!text) renderRich(out, "(No answer was returned.)");
+          if (stopReason === "max_tokens") out.appendChild(el("p", "note", "The answer was cut off because it hit the length limit."));
+          history.push(turn, { role: "assistant", content: echoable(blocks) });
+        }
+      } catch (e) {
+        out.remove();
+        addMsg("error", e.message || String(e));
+      } finally {
+        busy = false; sendBtn.disabled = false; input.focus();
+      }
+    }
+  })();
+  </script>
+</body>
+</html>
