@@ -13,7 +13,7 @@ metadata:
 Two ways to chat with a YouTube video:
 
 1. **💬 Chat here (default).** Load the transcript into this conversation and answer the user's questions directly, citing the exact moment for every claim.
-2. **🌐 Build a chat page.** On request, generate one HTML page with the embedded video, a searchable transcript, and an AI chat box. Clicking a cited timestamp jumps the video there. The page connects through OpenRouter with each viewer's own API key (bring your own key), defaulting to DeepSeek V4.1 Flash.
+2. **🌐 Build a chat page.** On request, generate one HTML page with the embedded video, a searchable transcript, and an AI chat box. Clicking a cited timestamp jumps the video there. The page connects through OpenRouter with each viewer's own API key (bring your own key), defaulting to DeepSeek V4.1 Flash. The chat is a lightweight agent with three tools (search the transcript, read a time range, play the video at a moment), capped at 6 steps per question; long transcripts are sent as an outline and read on demand.
 
 Use mode 2 only when the user asks for a page, app, tool, or something to share or embed. Otherwise use mode 1.
 

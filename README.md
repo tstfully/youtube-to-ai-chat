@@ -37,6 +37,8 @@ You get **one HTML file** with:
 | 🎬 **The video** | Embedded, with a clickable transcript that follows along |
 | 🔎 **Transcript search** | Find every mention of any word instantly |
 | 💬 **AI chat** | Answers cite moments as ⏱️ chips that jump the video |
+| 🤖 **A lightweight agent** | It can 🔎 search the transcript, 📖 read a section, and ▶️ play the video for you ("show me where they talk about pricing"). You see each step as it happens |
+| 🎧 **Long videos welcome** | For 3-hour podcasts it reads only the parts it needs, so answers stay fast and cheap |
 | ⚡ **One-tap questions** | 📝 Summarize · 🔥 Surprising claims · ✅ Action items, plus questions written for that video |
 | 📋 **Copy answers** | Paste straight into notes, docs, or Slack |
 | 🧠 **Pick your model** | DeepSeek V4.1 Flash by default, or Claude, Gemini, or any of 300+ models on OpenRouter |
