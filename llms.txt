@@ -1,0 +1,32 @@
+# YouTube to AI Chat
+
+> A free, open-source Claude skill to chat with any YouTube video. In chat, it answers questions from the video's transcript with clickable timestamp citations. On request, it builds a shareable single-file "chat with this video" web page: embedded player, searchable transcript, and a Claude-powered chat (using each viewer's own Anthropic API key, no backend) whose cited timestamps jump the video. Built for researchers, marketers, students, PMs, and creators; no coding needed.
+
+## Install
+
+- Claude Code (one step): `/plugin install youtube-to-ai-chat --marketplace tstfully/youtube-to-ai-chat`
+- Claude Code (two steps): `/plugin marketplace add tstfully/youtube-to-ai-chat` then `/plugin install youtube-to-ai-chat@youtube-skills`
+- Any agent via the Skills CLI: `npx skills add tstfully/youtube-to-ai-chat`
+- Manual: clone into `~/.claude/skills/youtube-to-ai-chat`
+- Claude.ai: download the repo ZIP and upload it under Settings → Capabilities → Skills
+- No AI account: https://www.youtubetranscript.dev/tools/chat
+
+## How it works
+
+1. Gets the video transcript from YouTubeTranscript.dev (MCP server, API key in `YOUTUBETRANSCRIPT_API_KEY`, or a transcript the user pastes from https://www.youtubetranscript.dev/tools/transcript).
+2. Mode 1 (default): answers in the conversation, citing `[m:ss](youtube link&t=Ns)` for every claim, and says so when the video doesn't cover a question.
+3. Mode 2 (on request): `scripts/build-chat-page.mjs` safely embeds the transcript into `assets/chat-template.html` and writes one HTML file.
+
+## Files
+
+- [SKILL.md](SKILL.md): the instructions an agent follows
+- [assets/chat-template.html](assets/chat-template.html): the chat page (player, transcript search, streaming Claude chat)
+- [scripts/fetch-transcript.mjs](scripts/fetch-transcript.mjs): zero-dependency transcript fetcher (Node 18+)
+- [scripts/build-chat-page.mjs](scripts/build-chat-page.mjs): builds a chat page from transcript JSON
+- [examples/candle-shop-podcast-chat.html](examples/candle-shop-podcast-chat.html): finished example page (fictional podcast)
+
+## Related
+
+- https://github.com/tstfully/youtube-to-case-study: YouTube video to case-study slideshow
+- https://github.com/tstfully/youtube-to-course: YouTube video to interactive course
+- https://youtubetranscript.dev: YouTube transcript API and free tools

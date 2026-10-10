@@ -1,0 +1,24 @@
+{
+  "name": "youtube-to-ai-chat",
+  "version": "1.1.0",
+  "description": "💬 Chat with any YouTube video. Answers cite the exact second, plus a shareable chat page.",
+  "author": {
+    "name": "tstfully",
+    "url": "https://github.com/tstfully"
+  },
+  "homepage": "https://github.com/tstfully/youtube-to-ai-chat",
+  "repository": "https://github.com/tstfully/youtube-to-ai-chat",
+  "license": "MIT",
+  "keywords": [
+    "chat",
+    "q-and-a",
+    "research",
+    "podcast",
+    "youtube",
+    "claude-skill",
+    "youtubetranscript"
+  ],
+  "skills": [
+    "./"
+  ]
+}

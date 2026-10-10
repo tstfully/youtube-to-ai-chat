@@ -56,7 +56,7 @@
 
     .chat { flex: 1; min-height: 0; display: flex; flex-direction: column; }
     .chat-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
-    .chat-head strong { flex: 1; }
+    .chat-head strong { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; height: 32px; min-width: 32px; padding: 0 10px; cursor: pointer; font-size: 13px; }
     .icon-btn:hover { border-color: var(--accent); }
     .messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
@@ -78,6 +78,12 @@
     .chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; cursor: pointer; text-align: left; }
     .chip:hover { border-color: var(--accent); color: var(--accent); }
 
+    .welcome .big-emoji { font-size: 34px; line-height: 1; margin-bottom: 8px; }
+    .chips .chip.quick { background: var(--accent-soft); border-color: transparent; color: var(--accent); font-weight: 600; }
+    .msg-actions { display: flex; gap: 6px; margin-top: 6px; }
+    .msg-actions button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 2px 10px; font-size: 12px; cursor: pointer; color: var(--muted); }
+    .msg-actions button:hover { color: var(--accent); border-color: var(--accent); }
+    body.no-video .player { display: none; }
     form.composer { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); }
     form.composer textarea { flex: 1; resize: none; border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 9px 12px; max-height: 140px; }
     form.composer button { border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 12px; padding: 0 16px; font-weight: 600; cursor: pointer; }
@@ -139,7 +145,7 @@
     <div class="col right">
       <section class="panel chat" aria-label="Chat">
         <div class="chat-head">
-          <strong>Ask this video</strong>
+          <strong>💬 Ask this video</strong>
           <button type="button" class="icon-btn" data-clear title="Start a new chat">New chat</button>
           <button type="button" class="icon-btn" data-settings title="Settings">⚙ Settings</button>
           <button type="button" class="icon-btn" data-theme title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
@@ -159,7 +165,7 @@
 
   <dialog data-dialog>
     <form method="dialog" data-settings-form>
-      <h2>Connect Claude</h2>
+      <h2>🔌 Connect Claude</h2>
       <p>This page sends your questions and the video transcript directly from your browser to Anthropic using your own API key. Nothing goes anywhere else.</p>
       <label for="key">Anthropic API key</label>
       <input id="key" type="password" autocomplete="off" placeholder="sk-ant-…" data-key>
@@ -229,6 +235,7 @@
       if (playerReady && player && player.seekTo) { player.seekTo(sec, true); player.playVideo(); }
       else if (VIDEO_ID) window.open("https://www.youtube.com/watch?v=" + encodeURIComponent(VIDEO_ID) + "&t=" + Math.floor(sec) + "s", "_blank", "noopener");
     }
+    if (!VIDEO_ID) document.body.classList.add("no-video");
     if (VIDEO_ID) {
       window.onYouTubeIframeAPIReady = function () {
         player = new YT.Player("player", {
@@ -349,15 +356,24 @@
     function welcome() {
       messagesBox.textContent = "";
       var w = el("div", "welcome");
+      w.appendChild(el("div", "big-emoji", "👋"));
       w.appendChild(el("h2", null, "Ask anything about this video"));
-      w.appendChild(el("p", null, segments.length ? "Answers come from the transcript and link to the exact moment." : "No transcript was loaded into this page."));
-      var qs = (DATA.suggested_questions || []).slice(0, 4);
-      if (qs.length) {
-        var chips = el("div", "chips");
-        qs.forEach(function (q) { var c = el("button", "chip", q); c.type = "button"; c.addEventListener("click", function () { ask(q); }); chips.appendChild(c); });
-        w.appendChild(chips);
-      }
+      w.appendChild(el("p", null, segments.length ? "Every answer comes from the transcript and links to the exact moment. Tap a timestamp to jump there." : "No transcript was loaded into this page."));
+      var quick = [
+        ["📝 Summarize in 5 bullets", "Summarize this video in 5 bullet points, with a timestamp for each."],
+        ["🔥 Most surprising claims", "What are the 3 most surprising or counterintuitive claims in this video?"],
+        ["✅ Action items", "What are the practical action items or takeaways from this video?"]
+      ];
+      var chips = el("div", "chips");
+      (DATA.suggested_questions || []).slice(0, 4).forEach(function (q) { chips.appendChild(chip(q, q, false)); });
+      quick.forEach(function (q) { chips.appendChild(chip(q[0], q[1], true)); });
+      w.appendChild(chips);
       messagesBox.appendChild(w);
+    }
+    function chip(label, question, isQuick) {
+      var c = el("button", "chip" + (isQuick ? " quick" : ""), label); c.type = "button";
+      c.addEventListener("click", function () { ask(question); });
+      return c;
     }
     welcome();
     $("[data-clear]").addEventListener("click", function () { if (busy) return; history = []; welcome(); });
@@ -448,6 +464,11 @@
         } else {
           if (!text) renderRich(out, "(No answer was returned.)");
           if (stopReason === "max_tokens") out.appendChild(el("p", "note", "The answer was cut off because it hit the length limit."));
+          var acts = el("div", "msg-actions"), copyBtn = el("button", null, "📋 Copy"); copyBtn.type = "button";
+          copyBtn.addEventListener("click", (function (t) { return function () {
+            try { navigator.clipboard.writeText(t).then(function () { copyBtn.textContent = "✅ Copied"; setTimeout(function () { copyBtn.textContent = "📋 Copy"; }, 1500); }); } catch (e) {}
+          }; })(text));
+          acts.appendChild(copyBtn); out.appendChild(acts);
           history.push(turn, { role: "assistant", content: echoable(blocks) });
         }
       } catch (e) {
